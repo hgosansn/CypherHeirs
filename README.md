@@ -3,7 +3,7 @@
 ### Know which charts deserve a closer look.
 
 [![GitHub release](https://img.shields.io/github/v/release/hgosansn/CypherHeirs?style=flat-square&label=release&color=b7ee85&labelColor=111923)](https://github.com/hgosansn/CypherHeirs/releases/latest)
-[![Build and deploy](https://github.com/hgosansn/CypherHeirs/actions/workflows/pages.yml/badge.svg)](https://github.com/hgosansn/CypherHeirs/actions/workflows/pages.yml)
+[![Build and deploy](https://img.shields.io/github/actions/workflow/status/hgosansn/CypherHeirs/pages.yml?branch=main&style=flat-square&label=build%20%26%20deploy&color=b7ee85&labelColor=111923)](https://github.com/hgosansn/CypherHeirs/actions/workflows/pages.yml)
 
 Cypher Heirs turns a crowded crypto watchlist into a clear view of what deserves your attention. Discover markets approaching meaningful price levels, understand why they rank, and shape the radar around your own trading interests.
 
