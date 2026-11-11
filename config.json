@@ -1,0 +1,325 @@
+{
+  "version": "1.1.0",
+  "interval": "1h",
+  "lookbackBars": 1000,
+  "atLevelATR": 0.1,
+  "nearLevelATR": 0.5,
+  "approachLookback": 3,
+  "recentSignalHours": 24,
+  "source": "Binance USD-M USDT perpetual last-trade candles",
+  "strategy": "strategy/indicator.pine",
+  "aliases": {
+    "LIT": {
+      "candidates": [
+        "LITUSDT"
+      ],
+      "expectedBase": "LIT",
+      "label": "LITUSD / LIGHTERUSD"
+    }
+  },
+  "scaledBases": {
+    "BONK": "1000BONK",
+    "FLOKI": "1000FLOKI",
+    "PEPE": "1000PEPE",
+    "SHIB": "1000SHIB"
+  },
+  "assetsUpdatedDate": "2026-11-11",
+  "assets": [
+    {
+      "symbol": "AAVE",
+      "enabled": true
+    },
+    {
+      "symbol": "ADA",
+      "enabled": true
+    },
+    {
+      "symbol": "AIXBT",
+      "enabled": true
+    },
+    {
+      "symbol": "ALGO",
+      "enabled": true
+    },
+    {
+      "symbol": "APT",
+      "enabled": true
+    },
+    {
+      "symbol": "ARB",
+      "enabled": true
+    },
+    {
+      "symbol": "ASTER",
+      "enabled": true
+    },
+    {
+      "symbol": "ATOM",
+      "enabled": true
+    },
+    {
+      "symbol": "AVAX",
+      "enabled": true
+    },
+    {
+      "symbol": "BCH",
+      "enabled": true
+    },
+    {
+      "symbol": "BNB",
+      "enabled": true
+    },
+    {
+      "symbol": "BONK",
+      "enabled": true
+    },
+    {
+      "symbol": "BTC",
+      "enabled": true
+    },
+    {
+      "symbol": "CRV",
+      "enabled": true
+    },
+    {
+      "symbol": "DOGE",
+      "enabled": true
+    },
+    {
+      "symbol": "DOT",
+      "enabled": true
+    },
+    {
+      "symbol": "ENA",
+      "enabled": true
+    },
+    {
+      "symbol": "ETC",
+      "enabled": true
+    },
+    {
+      "symbol": "ETH",
+      "enabled": true
+    },
+    {
+      "symbol": "ETHFI",
+      "enabled": true
+    },
+    {
+      "symbol": "FARTCOIN",
+      "enabled": true
+    },
+    {
+      "symbol": "FIL",
+      "enabled": true
+    },
+    {
+      "symbol": "FLOKI",
+      "enabled": true
+    },
+    {
+      "symbol": "GRASS",
+      "enabled": true
+    },
+    {
+      "symbol": "HBAR",
+      "enabled": true
+    },
+    {
+      "symbol": "HYPE",
+      "enabled": true
+    },
+    {
+      "symbol": "ICP",
+      "enabled": true
+    },
+    {
+      "symbol": "INJ",
+      "enabled": true
+    },
+    {
+      "symbol": "JTO",
+      "enabled": true
+    },
+    {
+      "symbol": "JUP",
+      "enabled": true
+    },
+    {
+      "symbol": "KAITO",
+      "enabled": true
+    },
+    {
+      "symbol": "LDO",
+      "enabled": true
+    },
+    {
+      "symbol": "LIT",
+      "enabled": true
+    },
+    {
+      "symbol": "LINK",
+      "enabled": true
+    },
+    {
+      "symbol": "LTC",
+      "enabled": true
+    },
+    {
+      "symbol": "MON",
+      "enabled": true
+    },
+    {
+      "symbol": "MOODENG",
+      "enabled": true
+    },
+    {
+      "symbol": "NEAR",
+      "enabled": true
+    },
+    {
+      "symbol": "ONDO",
+      "enabled": true
+    },
+    {
+      "symbol": "OP",
+      "enabled": true
+    },
+    {
+      "symbol": "PENDLE",
+      "enabled": true
+    },
+    {
+      "symbol": "PENGU",
+      "enabled": true
+    },
+    {
+      "symbol": "PEPE",
+      "enabled": true
+    },
+    {
+      "symbol": "PNUT",
+      "enabled": true
+    },
+    {
+      "symbol": "POL",
+      "enabled": true
+    },
+    {
+      "symbol": "POPCAT",
+      "enabled": true
+    },
+    {
+      "symbol": "PUMP",
+      "enabled": true
+    },
+    {
+      "symbol": "RENDER",
+      "enabled": true
+    },
+    {
+      "symbol": "S",
+      "enabled": true
+    },
+    {
+      "symbol": "SHIB",
+      "enabled": true
+    },
+    {
+      "symbol": "SOL",
+      "enabled": true
+    },
+    {
+      "symbol": "STX",
+      "enabled": true
+    },
+    {
+      "symbol": "SUI",
+      "enabled": true
+    },
+    {
+      "symbol": "TAO",
+      "enabled": true
+    },
+    {
+      "symbol": "TIA",
+      "enabled": true
+    },
+    {
+      "symbol": "TRUMP",
+      "enabled": true
+    },
+    {
+      "symbol": "TRX",
+      "enabled": true
+    },
+    {
+      "symbol": "UNI",
+      "enabled": true
+    },
+    {
+      "symbol": "VIRTUAL",
+      "enabled": true
+    },
+    {
+      "symbol": "WIF",
+      "enabled": true
+    },
+    {
+      "symbol": "WLD",
+      "enabled": true
+    },
+    {
+      "symbol": "XLM",
+      "enabled": true
+    },
+    {
+      "symbol": "XPL",
+      "enabled": true
+    },
+    {
+      "symbol": "XRP",
+      "enabled": true
+    },
+    {
+      "symbol": "ZEC",
+      "enabled": true
+    },
+    {
+      "symbol": "ZRO",
+      "enabled": true
+    },
+    {
+      "symbol": "BRENTOIL",
+      "enabled": true
+    },
+    {
+      "symbol": "CL",
+      "enabled": true
+    },
+    {
+      "symbol": "COPPER",
+      "enabled": true
+    },
+    {
+      "symbol": "GOLD",
+      "enabled": true
+    },
+    {
+      "symbol": "NATGAS",
+      "enabled": true
+    },
+    {
+      "symbol": "S&P500",
+      "enabled": true
+    },
+    {
+      "symbol": "SILVER",
+      "enabled": true
+    },
+    {
+      "symbol": "XYZ100",
+      "enabled": true
+    }
+  ]
+}

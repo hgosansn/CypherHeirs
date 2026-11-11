@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+*.log
+*.local
+.DS_Store
+Thumbs.db
+
+dist/
+.runtime-static/
+.sites-runtime/

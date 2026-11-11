@@ -1,0 +1,417 @@
+//@version=6
+// This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+// Obtain the license at https://mozilla.org/MPL/2.0/.
+// MSF Context11.4.0: audited named-level BASE, reaction extreme stop.
+strategy("MSF Context v11.4.0 - frozen session BASE", overlay=true, pyramiding=0, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.04, slippage=0, margin_long=100, margin_short=100, calc_on_order_fills=false, calc_on_every_tick=false, process_orders_on_close=false, max_bars_back=501, max_labels_count=200)
+// BEGIN SHARED SIGNAL CORE
+// Frozen BASE: one named level + opening window + intact reaction + later R/C structure.
+bool showContext = input.bool(true, "Named key levels and setup trigger")
+bool showEntryNotes = input.bool(true, "Entry level names and tooltips")
+float ema9 = ta.ema(close, 9)
+float ema21 = ta.ema(close, 21)
+float ema50 = ta.ema(close, 50)
+float ema200 = ta.ema(close, 200)
+float volumeBasis = ta.sma(volume, 20)
+float relativeVolume = volumeBasis > 0 ? volume / volumeBasis : na
+float pivotHighWindow = ta.highest(high, 9)
+float pivotLowWindow = ta.lowest(low, 9)
+float pivotHighRight = ta.highest(high, 4)
+float pivotLowRight = ta.lowest(low, 4)
+float pivotHigh = bar_index >= 8 and math.round(high[4], 9) == math.round(pivotHighWindow, 9) and math.round(high[4], 9) > math.round(pivotHighRight, 9) ? high[4] : na
+float pivotLow = bar_index >= 8 and math.round(low[4], 9) == math.round(pivotLowWindow, 9) and math.round(low[4], 9) < math.round(pivotLowRight, 9) ? low[4] : na
+int utcDay = int(math.floor(time / 86400000.0)) * 86400000
+int utcWeek = int(math.floor((time + 259200000.0) / 604800000.0)) * 604800000 - 259200000
+bool continuous = bar_index == 0 or time == time_close[1]
+var int dayStamp = na
+var int weekStamp = na
+var int dayLastClose = na
+var int weekLastClose = na
+var bool dayComplete = false
+var bool weekComplete = false
+var bool volumeComplete = false
+var float dayHigh = na
+var float dayLow = na
+var float weekHigh = na
+var float weekLow = na
+var float previousDayHigh = na
+var float previousDayLow = na
+var float previousWeekHigh = na
+var float previousWeekLow = na
+var float weeklyOpen = na
+var float weeklyVolume = 0.0
+var float weeklyMean = 0.0
+var float weeklyM2 = 0.0
+var currentRangeHigh = array.new_float(3, na)
+var currentRangeLow = array.new_float(3, na)
+var currentRangeEnd = array.new_int(3, na)
+var currentRangeLast = array.new_int(3, na)
+var currentRangeComplete = array.new_bool(3, false)
+var previousRangeHigh = array.new_float(3, na)
+var previousRangeLow = array.new_float(3, na)
+var previousRangeKnown = array.new_int(3, na)
+var levels = array.new_float(16, na)
+var levelNames = array.from("Asia ORH", "Asia ORL", "London ORH", "London ORL", "NY ORH", "NY ORL", "PDH", "PDL", "PWH", "PWL", "W-VWAP", "W-VWAP -1sigma", "W-VWAP -2sigma", "W-VWAP +1sigma", "W-VWAP +2sigma", "Weekly Open")
+var usedLong = array.new_bool(16, false)
+var usedShort = array.new_bool(16, false)
+var armedCoincident = array.new_bool(16, false)
+f_local_minute(int stamp, string zone) =>
+    hour(stamp, zone) * 60.0 + minute(stamp, zone) + second(stamp, zone) / 60.0
+var float swingHigh = na
+var float swingLow = na
+var int swingHighOrigin = na
+var int swingLowOrigin = na
+var bool highConsumed = false
+var bool lowConsumed = false
+var int trend = 0
+var float defended = na
+var int lastOccurrence = na
+var int armedSide = 0
+var int armedFamily = 0
+var int armedOccurrence = na
+var int armedEnd = na
+var int armedSource = na
+var float armedLevel = na
+var float armedTrigger = na
+var int armedPivotOrigin = na
+var float armedStop = na
+var int reactionBar = na
+var int reactionTime = na
+bool longSignal = false
+bool shortSignal = false
+bool longInvalidated = false
+bool shortInvalidated = false
+float signalStop = na
+float eventLevel = na
+float eventTrigger = na
+int eventFamily = 0
+int eventSource = na
+int eventReactionBar = na
+int eventReactionTime = na
+int cancellation = 0
+int sessionId = 0
+int occurrence = na
+int sessionEnd = na
+float nearestAbove = na
+float nearestBelow = na
+int aboveSource = na
+int belowSource = na
+float previousWeeklyMean = na
+float previousWeeklySigma = na
+if barstate.isconfirmed
+    // Publish only complete observed UTC periods; missing boundary candles cannot qualify.
+    if na(dayStamp) or utcDay != dayStamp
+        bool completePreviousDay = dayComplete and dayLastClose == utcDay and dayStamp == utcDay - 86400000
+        previousDayHigh := completePreviousDay ? dayHigh : na
+        previousDayLow := completePreviousDay ? dayLow : na
+        dayStamp := utcDay
+        dayComplete := time == utcDay
+        dayHigh := high
+        dayLow := low
+    else
+        dayComplete := dayComplete and continuous
+        dayHigh := math.max(dayHigh, high)
+        dayLow := math.min(dayLow, low)
+    if na(weekStamp) or utcWeek != weekStamp
+        bool completePreviousWeek = weekComplete and weekLastClose == utcWeek and weekStamp == utcWeek - 604800000
+        previousWeekHigh := completePreviousWeek ? weekHigh : na
+        previousWeekLow := completePreviousWeek ? weekLow : na
+        weekStamp := utcWeek
+        weekComplete := time == utcWeek
+        volumeComplete := time == utcWeek
+        weeklyOpen := time == utcWeek ? open : na
+        weekHigh := high
+        weekLow := low
+        weeklyVolume := 0.0
+        weeklyMean := 0.0
+        weeklyM2 := 0.0
+    else
+        weekComplete := weekComplete and continuous
+        volumeComplete := volumeComplete and continuous
+        weekHigh := math.max(weekHigh, high)
+        weekLow := math.min(weekLow, low)
+    array.fill(levels, na)
+    array.set(levels, 6, previousDayHigh)
+    array.set(levels, 7, previousDayLow)
+    array.set(levels, 8, previousWeekHigh)
+    array.set(levels, 9, previousWeekLow)
+    array.set(levels, 15, weeklyOpen)
+    for k = 0 to 2
+        string zone = k == 0 ? "Asia/Tokyo" : k == 1 ? "Europe/London" : "America/New_York"
+        float startMinute = k == 0 ? 540.0 : k == 1 ? 480.0 : 570.0
+        float endMinute = k == 0 ? 660.0 : k == 1 ? 600.0 : 690.0
+        float localMinute = f_local_minute(time, zone)
+        int todayEnd = time + int((endMinute - localMinute) * 60000.0)
+        int todayStart = time + int((startMinute - localMinute) * 60000.0)
+        int yesterdayEnd = time - 86400000 + int((endMinute - f_local_minute(time - 86400000, zone)) * 60000.0)
+        int expectedEnd = time >= todayEnd ? todayEnd : yesterdayEnd
+        bool inside = time >= todayStart and time_close <= todayEnd and time < todayEnd
+        int oldEnd = array.get(currentRangeEnd, k)
+        if not na(oldEnd) and time >= oldEnd
+            bool fullRange = array.get(currentRangeComplete, k) and array.get(currentRangeLast, k) == oldEnd
+            array.set(previousRangeHigh, k, fullRange ? array.get(currentRangeHigh, k) : na)
+            array.set(previousRangeLow, k, fullRange ? array.get(currentRangeLow, k) : na)
+            array.set(previousRangeKnown, k, fullRange ? oldEnd : na)
+            array.set(currentRangeEnd, k, na)
+        if array.get(previousRangeKnown, k) != expectedEnd
+            array.set(previousRangeHigh, k, na)
+            array.set(previousRangeLow, k, na)
+            array.set(previousRangeKnown, k, na)
+        array.set(levels, k * 2, array.get(previousRangeHigh, k))
+        array.set(levels, k * 2 + 1, array.get(previousRangeLow, k))
+        if inside
+            if na(sessionEnd) or todayEnd < sessionEnd
+                sessionId := k + 1
+                occurrence := todayEnd
+                sessionEnd := todayEnd
+            if na(array.get(currentRangeEnd, k)) or array.get(currentRangeEnd, k) != todayEnd
+                array.set(currentRangeHigh, k, high)
+                array.set(currentRangeLow, k, low)
+                array.set(currentRangeEnd, k, todayEnd)
+                array.set(currentRangeComplete, k, time == todayStart)
+            else
+                array.set(currentRangeComplete, k, array.get(currentRangeComplete, k) and array.get(currentRangeLast, k) == time)
+                array.set(currentRangeHigh, k, math.max(array.get(currentRangeHigh, k), high))
+                array.set(currentRangeLow, k, math.min(array.get(currentRangeLow, k), low))
+            array.set(currentRangeLast, k, time_close)
+    if volumeComplete and weeklyVolume > 0 and time != utcWeek
+        previousWeeklyMean := weeklyMean
+        previousWeeklySigma := math.sqrt(math.max(0.0, weeklyM2 / weeklyVolume))
+        array.set(levels, 10, previousWeeklyMean)
+        array.set(levels, 11, previousWeeklyMean - previousWeeklySigma)
+        array.set(levels, 12, previousWeeklyMean - 2.0 * previousWeeklySigma)
+        array.set(levels, 13, previousWeeklyMean + previousWeeklySigma)
+        array.set(levels, 14, previousWeeklyMean + 2.0 * previousWeeklySigma)
+    float oldHigh = swingHigh
+    float oldLow = swingLow
+    int oldHighOrigin = swingHighOrigin
+    int oldLowOrigin = swingLowOrigin
+    bool oldHighConsumed = highConsumed
+    bool oldLowConsumed = lowConsumed
+    int oldTrend = trend
+    longInvalidated := trend == 1 and close < defended
+    shortInvalidated := trend == -1 and close > defended
+    if longInvalidated or shortInvalidated
+        trend := 0
+        defended := na
+    if not na(pivotHigh)
+        swingHigh := pivotHigh
+        swingHighOrigin := bar_index - 4
+        highConsumed := false
+    if not na(pivotLow)
+        swingLow := pivotLow
+        swingLowOrigin := bar_index - 4
+        lowConsumed := false
+    bool bullBreak = not highConsumed and not na(swingHigh) and not na(swingLow) and close > swingHigh and close > swingLow
+    bool bearBreak = not lowConsumed and not na(swingLow) and not na(swingHigh) and close < swingLow and close < swingHigh
+    if bullBreak
+        defended := trend == 1 ? math.max(defended, swingLow) : swingLow
+        trend := 1
+        highConsumed := true
+    else if bearBreak
+        defended := trend == -1 ? math.min(defended, swingHigh) : swingHigh
+        trend := -1
+        lowConsumed := true
+    if na(lastOccurrence) or na(occurrence) or lastOccurrence != occurrence
+        array.fill(usedLong, false)
+        array.fill(usedShort, false)
+        lastOccurrence := occurrence
+    bool cancelled = false
+    if armedSide != 0
+        bool expired = na(occurrence) or occurrence != armedOccurrence or time_close > armedEnd
+        bool stopped = armedSide == 1 ? low <= armedStop : high >= armedStop
+        bool superseded = armedSide == 1 ? not na(pivotHigh) and swingHighOrigin != armedPivotOrigin : not na(pivotLow) and swingLowOrigin != armedPivotOrigin
+        bool stateLost = armedFamily == 2 and trend != armedSide
+        cancellation := expired ? 1 : not continuous ? 2 : stopped ? 3 : superseded ? 4 : stateLost ? 5 : 0
+        if cancellation != 0
+            armedSide := 0
+            cancelled := true
+        else
+            bool crossed = armedSide == 1 ? close > armedTrigger : close < armedTrigger
+            bool stateOK = trend == armedSide
+            bool newState = oldTrend != armedSide
+            if crossed and stateOK and (armedFamily == 2 or newState)
+                longSignal := armedSide == 1
+                shortSignal := armedSide == -1
+                signalStop := armedStop
+                eventFamily := armedFamily
+                eventSource := armedSource
+                eventLevel := armedLevel
+                eventTrigger := armedTrigger
+                eventReactionBar := reactionBar
+                eventReactionTime := reactionTime
+                for k = 0 to 15
+                    if k == armedSource or array.get(armedCoincident, k)
+                        if armedSide == 1
+                            array.set(usedLong, k, true)
+                        else
+                            array.set(usedShort, k, true)
+                armedSide := 0
+            else if armedFamily == 1 and stateOK
+                armedSide := 0
+                cancellation := 6
+                cancelled := true
+    if armedSide == 0 and not longSignal and not shortSignal and not cancelled and sessionId != 0 and oldTrend != 0
+        float bestDistance = na
+        for k = 0 to 15
+            float level = array.get(levels, k)
+            bool touched = not na(level) and low <= level and high >= level
+            bool longEligible = touched and close > level and not oldHighConsumed and not na(oldHigh) and oldHigh > close and not array.get(usedLong, k)
+            bool shortEligible = touched and close < level and not oldLowConsumed and not na(oldLow) and oldLow < close and not array.get(usedShort, k)
+            int candidateSide = longEligible ? 1 : shortEligible ? -1 : 0
+            int candidateFamily = candidateSide == oldTrend ? 2 : 1
+            bool fresh = candidateSide == 1 ? na(pivotHigh) or swingHighOrigin == oldHighOrigin : na(pivotLow) or swingLowOrigin == oldLowOrigin
+            bool stateEligible = candidateFamily == 2 ? trend == candidateSide : trend != candidateSide
+            float distance = math.abs(level - close)
+            if candidateSide != 0 and fresh and stateEligible and (na(bestDistance) or distance < bestDistance)
+                bestDistance := distance
+                armedSide := candidateSide
+                armedFamily := candidateFamily
+                armedOccurrence := occurrence
+                armedEnd := sessionEnd
+                armedSource := k
+                armedLevel := level
+                armedTrigger := candidateSide == 1 ? oldHigh : oldLow
+                armedPivotOrigin := candidateSide == 1 ? oldHighOrigin : oldLowOrigin
+                armedStop := candidateSide == 1 ? low : high
+                reactionBar := bar_index
+                reactionTime := time
+        if armedSide != 0 and reactionBar == bar_index
+            for k = 0 to 15
+                array.set(armedCoincident, k, math.round(array.get(levels, k), 9) == math.round(armedLevel, 9))
+    for k = 0 to 15
+        float level = array.get(levels, k)
+        if not na(level) and level > close and (na(nearestAbove) or level < nearestAbove)
+            nearestAbove := level
+            aboveSource := k
+        if not na(level) and level < close and (na(nearestBelow) or level > nearestBelow)
+            nearestBelow := level
+            belowSource := k
+    // Stable weighted moments update only AFTER decisions using the preceding-close values.
+    dayLastClose := time_close
+    weekLastClose := time_close
+    if na(volume) or volume <= 0
+        volumeComplete := false
+    else
+        float delta = hlc3 - weeklyMean
+        float newVolume = weeklyVolume + volume
+        float newMean = weeklyMean + volume / newVolume * delta
+        weeklyM2 := weeklyM2 + volume * delta * (hlc3 - newMean)
+        weeklyMean := newMean
+        weeklyVolume := newVolume
+// VISUALS BELOW
+
+bool signal = longSignal or shortSignal
+int signalSide = longSignal ? 1 : shortSignal ? -1 : 0
+color mint = color.rgb(62, 230, 183)
+color coral = color.rgb(255, 105, 124)
+color gold = color.rgb(234, 190, 103)
+color steel = color.rgb(134, 154, 179)
+color directionColor = trend == 1 ? mint : trend == -1 ? coral : steel
+float ribbonRsi = ta.rsi(close, 14)
+var float ribbonStrength = 0.0
+var color ribbonColor = steel
+if barstate.isconfirmed
+    ribbonStrength := na(ribbonRsi) ? 0.0 : math.pow(math.min(1.0, math.max(0.0, (math.abs(ribbonRsi - 50.0) - 20.0) / 15.0)), 2.0)
+    color ribbonHue = color.from_gradient(ema9 - ema21, -math.abs(ema21) * 0.002, math.abs(ema21) * 0.002, coral, mint)
+    ribbonColor := color.from_gradient(ribbonStrength, 0.0, 1.0, ribbonHue, color.rgb(255, 193, 48))
+var float entryGuide = na
+var float stopGuide = na
+var int signalBar = na
+var float lastEventLevel = na
+var int lastEventSource = na
+if signal
+    entryGuide := close
+    stopGuide := signalStop
+    signalBar := bar_index
+    lastEventLevel := eventLevel
+    lastEventSource := eventSource
+bool guideVisible = not na(signalBar) and bar_index - signalBar < 6
+float selectedLevel = signal ? eventLevel : armedSide != 0 ? armedLevel : guideVisible ? lastEventLevel : na
+float selectedTrigger = signal ? eventTrigger : armedSide != 0 ? armedTrigger : na
+int selectedSource = signal ? eventSource : armedSide != 0 ? armedSource : guideVisible ? lastEventSource : na
+// These remain the first plots: alerts use fixed Entry/Invalidation placeholders.
+plot(signal ? close : na, "Entry", color=color.rgb(242, 237, 222), linewidth=3, style=plot.style_circles)
+plot(signal ? signalStop : na, "Invalidation", color=gold, linewidth=3, style=plot.style_circles)
+plot(guideVisible ? entryGuide : na, "Entry guide", color=color.new(color.rgb(242, 237, 222), 25), style=plot.style_linebr)
+plot(guideVisible ? stopGuide : na, "Invalidation guide", color=color.new(gold, 35), style=plot.style_linebr)
+plot(ema21, "Ribbon glow", color=color.new(ribbonColor, 86), linewidth=6, editable=false)
+fastRibbon = plot(ema9, "EMA 9", color=color.new(ribbonColor, 15))
+slowRibbon = plot(ema21, "EMA 21", color=color.new(ribbonColor, 0), linewidth=2)
+fill(fastRibbon, slowRibbon, math.max(ema9, ema21), math.min(ema9, ema21), color.new(ribbonColor, 78), color.new(ribbonColor, 96), title="EMA ribbon gradient", fillgaps=false)
+plot(ema50, "EMA 50", color=color.rgb(179, 194, 211), linewidth=1)
+plot(ema200, "EMA 200", color=color.new(directionColor, 5), linewidth=2)
+plot(trend == 1 ? defended : na, "Bull structure", color=mint, linewidth=2, style=plot.style_linebr)
+plot(trend == -1 ? defended : na, "Bear structure", color=coral, linewidth=2, style=plot.style_linebr)
+plotshape(longSignal and eventFamily == 1, "Long reversal R", shape.triangleup, location.belowbar, mint, text="R", textcolor=mint, size=size.small)
+plotshape(shortSignal and eventFamily == 1, "Short reversal R", shape.triangledown, location.abovebar, coral, text="R", textcolor=coral, size=size.small)
+plotshape(longSignal and eventFamily == 2, "Long continuation C", shape.triangleup, location.belowbar, mint, text="C", textcolor=mint, size=size.small)
+plotshape(shortSignal and eventFamily == 2, "Short continuation C", shape.triangledown, location.abovebar, coral, text="C", textcolor=coral, size=size.small)
+plotshape(trend != trend[1] and trend != 0, "Structure shift", shape.diamond, location.belowbar, gold, size=size.tiny)
+plotshape(longInvalidated, "Long structure invalidated", shape.xcross, location.belowbar, gold, size=size.tiny)
+plotshape(shortInvalidated, "Short structure invalidated", shape.xcross, location.abovebar, gold, size=size.tiny)
+plot(showContext and selectedSource == selectedSource[1] ? selectedLevel : na, "Selected named reaction level", color=color.new(steel, 15), linewidth=2, style=plot.style_linebr)
+plot(showContext ? selectedTrigger : na, "Frozen structure trigger", color=color.new(gold, 35), style=plot.style_circles)
+plot(showContext and aboveSource == aboveSource[1] ? nearestAbove : na, "Nearest named level above", color=color.new(coral, 65), style=plot.style_linebr)
+plot(showContext and belowSource == belowSource[1] ? nearestBelow : na, "Nearest named level below", color=color.new(mint, 65), style=plot.style_linebr)
+var label aboveLabel = na
+var label belowLabel = na
+var label selectedLabel = na
+if barstate.islast and barstate.isconfirmed
+    label.delete(aboveLabel)
+    label.delete(belowLabel)
+    label.delete(selectedLabel)
+    if showContext and not na(nearestAbove)
+        string namesAbove = ""
+        for k = 0 to 15
+            if math.round(array.get(levels, k), 9) == math.round(nearestAbove, 9)
+                namesAbove := namesAbove + (str.length(namesAbove) > 0 ? " / " : "") + array.get(levelNames, k)
+        aboveLabel := label.new(bar_index + 1, nearestAbove, namesAbove + "  " + str.tostring(nearestAbove, format.mintick), style=label.style_label_left, color=color.new(coral, 88), textcolor=coral, size=size.small)
+    if showContext and not na(nearestBelow)
+        string namesBelow = ""
+        for k = 0 to 15
+            if math.round(array.get(levels, k), 9) == math.round(nearestBelow, 9)
+                namesBelow := namesBelow + (str.length(namesBelow) > 0 ? " / " : "") + array.get(levelNames, k)
+        belowLabel := label.new(bar_index + 1, nearestBelow, namesBelow + "  " + str.tostring(nearestBelow, format.mintick), style=label.style_label_left, color=color.new(mint, 88), textcolor=mint, size=size.small)
+    if showContext and not na(selectedLevel) and selectedLevel != nearestAbove and selectedLevel != nearestBelow
+        selectedLabel := label.new(bar_index + 1, selectedLevel, array.get(levelNames, selectedSource) + "  " + str.tostring(selectedLevel, format.mintick), style=label.style_label_left, color=color.new(steel, 88), textcolor=steel, size=size.small)
+if signal and showEntryNotes
+    string familyName = eventFamily == 1 ? "R reversal" : "C continuation"
+    string sessionName = sessionId == 1 ? "Asia" : sessionId == 2 ? "London" : "New York"
+    string sourceName = array.get(levelNames, eventSource)
+    string note = familyName + " | " + sessionName + " | " + sourceName + "\nReaction level: " + str.tostring(eventLevel, format.mintick) + "\nFrozen structure: " + str.tostring(eventTrigger, format.mintick) + "\nEntry reference: " + str.tostring(close, format.mintick) + "\nReaction stop: " + str.tostring(signalStop, format.mintick)
+    label.new(bar_index, signalSide == 1 ? low : high, sourceName, style=signalSide == 1 ? label.style_label_up : label.style_label_down, color=color.new(steel, 94), textcolor=steel, size=size.tiny, tooltip=note)
+plot(signal ? close : na, "Signal price", display=display.none)
+plot(signalSide, "Signal side", display=display.data_window)
+plot(eventFamily, "Family R1 C2", display=display.data_window)
+plot(trend, "Trend state", display=display.data_window)
+plot(sessionId, "Session Asia1 London2 NY3", display=display.data_window)
+plot(armedSide, "Armed direction", display=display.data_window)
+plot(signal ? eventSource : armedSide != 0 ? armedSource : na, "Named level source index", display=display.data_window)
+plot(signal ? eventReactionBar : armedSide != 0 ? reactionBar : na, "Reaction bar index", display=display.data_window)
+plot(signal ? eventReactionTime : armedSide != 0 ? reactionTime : na, "Reaction UTC timestamp", display=display.data_window)
+plot(signal ? eventLevel : na, "Reaction level at entry", display=display.data_window)
+plot(signal ? eventTrigger : na, "Structure trigger at entry", display=display.data_window)
+plot(cancellation, "Cancellation expiry1 gap2 stop3 stale4 state5 consumed6", display=display.data_window)
+plot(barstate.isconfirmed ? relativeVolume : na, "Relative volume 20", display=display.data_window)
+plot(barstate.isconfirmed ? ribbonRsi : na, "Ribbon RSI 14", display=display.data_window)
+plot(100 * ribbonStrength, "Ribbon RSI extreme %", display=display.data_window)
+plot(previousWeeklyMean, "Prior-close weekly VWAP", display=display.data_window)
+plot(previousWeeklySigma, "Prior-close weekly sigma", display=display.data_window)
+
+// END SHARED SIGNAL CORE
+
+// Next-open entries; one position, no reversal, target, timed exit or breakeven.
+var float activeStop = na
+int closedCount = strategy.closedtrades + 0
+bool exitedThisBar = closedCount > 0 ? strategy.closedtrades.exit_bar_index(closedCount - 1) == bar_index : false
+if barstate.isconfirmed
+    if strategy.position_size != 0
+        int heldSide = strategy.position_size > 0 ? 1 : -1
+        if trend == heldSide and not na(defended)
+            activeStop := heldSide == 1 ? math.max(activeStop, defended) : math.min(activeStop, defended)
+        strategy.exit("Structure stop", from_entry="MSF", stop=activeStop, disable_alert=true)
+    else if signal and not exitedThisBar
+        activeStop := signalStop
+        strategy.entry("MSF", longSignal ? strategy.long : strategy.short, disable_alert=true)
+        strategy.exit("Structure stop", from_entry="MSF", stop=activeStop, disable_alert=true)
+plot(strategy.position_size != 0 ? activeStop : na, "Active stop", color=color.rgb(234, 190, 103), linewidth=2, style=plot.style_linebr)

@@ -1,0 +1,6 @@
+{
+  "description": "Prefilled editable asset list; no venue eligibility is implied",
+  "seedDate": "2026-11-11",
+  "maintenance": "Manage inclusion in the Assets tab. Asset symbols are fixed; availability is filtered against active Binance USDT perpetual contracts.",
+  "prefilledCount": 74
+}
