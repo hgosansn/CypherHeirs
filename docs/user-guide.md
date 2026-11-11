@@ -31,5 +31,15 @@ Refresh the scan, review the priority queue, inspect why a market ranks, then pi
 If Binance requests fail or candles are outdated, the app shows that state. It cannot override regional or network restrictions. Keep the last report for reference or use a correctly sourced candle import; see [data and privacy](data-and-privacy.md).
 
 
+
+
+## Live watch and efficient refresh
+
+**Run fresh scan** now reuses confirmed history and asks for missing candles. An identical confirmed window reuses its checked result; changed candles still run the full Pine indicator. Expand **Scan efficiency** for request, byte and timing counters or choose **Rebuild full history** for an authoritative rebuild.
+
+**Live watch** is enabled by default after a report is available. It updates a separate Live price column and an explicitly unconfirmed chart preview. Ratings, levels and signals remain based on completed candles. A confirmed close schedules an automatic refresh; reload/resume repairs missing candles. Switch Live watch off for periodic scans with no stream traffic. It pauses while tabs are hidden, and imported replays never start a live feed.
+
+Multiple tabs share the saved report and live connection; a concurrent scan is not duplicated. If another tab is scanning, its completion is shared. [How the pipeline works](data-pipeline.md).
+
 ---
 [Documentation index](README.md) · [Product overview](../README.md) · [Open Cypher Heirs](https://hgosansn.github.io/CypherHeirs/)

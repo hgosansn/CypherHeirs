@@ -28,8 +28,8 @@ The dev server uses `http://127.0.0.1:8792/`. Production output is `dist/`; serv
 | --- | --- |
 | `src/` | React UI and shadcn/ui components |
 | `lib/` | Source calculations, attention rules and asset mappings |
-| `client.mjs` | Browser storage, settings and worker coordination |
-| `scanner-worker.js` | Direct market downloads and Pine execution |
+| `client.mjs` | Browser settings, cross-tab ownership, live quotes and scan coordination |
+| `scanner-worker.js` | Bounded downloads, validated candle cache and full Pine execution |
 | `strategy/` | Preserved Pine indicator and companion strategy |
 | `vendor/`, `licenses/` | Pinned scanner bundles and license notices |
 | `tests/` | Offline contracts |
@@ -42,6 +42,10 @@ The dev server uses `http://127.0.0.1:8792/`. Production output is `dist/`; serv
 
 Run checks and the production build, update the [changelog](CHANGELOG.md), commit and push to `main`, and wait for Pages verification. Create an annotated version tag on that tested commit, then publish a GitHub Release with the matching changelog notes. The README release badge links to the latest published release. The hosted app remains the primary distribution; source snapshots are available from GitHub Releases.
 
+
+
+
+The [data pipeline guide](data-pipeline.md) documents cache fingerprints, live transport, cross-tab coordination and performance checks. Storage uses the existing IndexedDB database without discarding workspace keys.
 
 ---
 [Documentation index](README.md) · [Product overview](../README.md) · [Open Cypher Heirs](https://hgosansn.github.io/CypherHeirs/)

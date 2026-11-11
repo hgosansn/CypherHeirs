@@ -41,5 +41,11 @@ Replace each candle array with actual Binance-format kline rows: opening timesta
 
 The site connects directly to public data endpoints from the visitor's browser. No credentials are requested. Local pins and saved scans stay in the browser unless the visitor explicitly exports them. GitHub serves the static application; it does not perform the analysis.
 
+
+
+## Live and cached data
+
+Confirmed candles and checked analysis results are retained locally by instrument/timeframe. Repeated scans fetch missing data rather than downloading the entire window. A separate Binance WebSocket provides unconfirmed prices and the selected chart's forming candle; these values do not enter confirmed attention ratings. The feed pauses in hidden tabs and never runs for imported replays. One connection is coordinated across tabs of the same origin. See [cached history and live updates](data-pipeline.md) for integrity, rate-limit handling and byte-counter definitions.
+
 ---
 [Documentation index](README.md) · [Product overview](../README.md) · [Open Cypher Heirs](https://hgosansn.github.io/CypherHeirs/)

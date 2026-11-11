@@ -1,4 +1,5 @@
 import './attention.mjs';
+import './data-pipeline.mjs';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';

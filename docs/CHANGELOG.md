@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added validated candle history caches, missing-candle updates, four-way download concurrency and identical-input analysis reuse.
+- Added one shared live mini-ticker connection, selected-chart forming previews and confirmed-close refresh with REST gap recovery.
+- Added live controls, scan-efficiency counters, shared rate-limit cooldowns and pipeline integrity tests.
+
 - Added a public landing page with the promotional capture, product benefits, interactive feature tabs, FAQs and clear dashboard links.
 - Moved the app to `dashboard.html`, preserving browser storage and legacy symbol-selection links.
 
