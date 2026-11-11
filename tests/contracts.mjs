@@ -1,3 +1,4 @@
+import './attention.mjs';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -24,7 +25,7 @@ const metadata={symbols:[{symbol:'BTCUSDT',baseAsset:'BTC',quoteAsset:'USDT',con
 const availability=filterAvailableAssets({...config,assets:[{symbol:'BTC'},{symbol:'PEPE'},{symbol:'ETH'},{symbol:'GOLD'}]},metadata);assert.deepEqual(availability.available.map(a=>a.symbol),['BTC','PEPE']);assert.deepEqual(availability.filtered.map(a=>a.symbol),['ETH','GOLD']);assert.deepEqual(providerSymbols(config,metadata),['BTC','PEPE']);
 const modified={...config,assets:config.assets.map(a=>a.symbol==='ETH'?{...a,enabled:false}:a)};assert.notEqual(assetSignature(modified),assetSignature(config));
 
-const now=Date.parse('2026-11-11T12:30:00Z'),market={status:'ok',candleCloseAt:'2026-11-11T12:00:00Z',levels:[{distanceATR:.1,approaching:true,touchedLastBar:true,status:'at-level'}],recentSignals:[]};assert.equal(attention(market,{interval:'1h'},now).score,79);assert.equal(attention({...market,candleCloseAt:'2026-11-11T11:00:00Z'},{interval:'1h'},now).score,null);
+const now=Date.parse('2026-11-11T12:30:00Z'),market={status:'ok',candleCloseAt:'2026-11-11T12:00:00Z',levels:[{id:'PDH',distanceATR:.1,approaching:true,touchedLastBar:true,status:'at-level'}],recentSignals:[]};assert.equal(attention(market,{interval:'1h'},now).score,79);assert.equal(attention({...market,candleCloseAt:'2026-11-11T11:00:00Z'},{interval:'1h'},now).score,null);
 const scope={console,Intl,TextEncoder,TextDecoder,URL,URLSearchParams,AbortController,performance,setTimeout,clearTimeout,structuredClone};scope.window=scope;vm.createContext(scope);vm.runInContext(await read('vendor/vela.global.min.js'),scope);vm.runInContext(await read('vendor/vela-pinets.global.min.js'),scope);
 async function run(src,input){const e=new scope.VelaPinets.PineEngine(),prepared=await e.prepare(src,'Static contracts');let session;try{await new Promise((resolve,reject)=>{session=e.execute({prepared,bars:input,market:{symbol:'TESTUSDT',timeframe:'60'},mode:'static'},{onModel(){},onDone:resolve,onError:reject});});const result=await session.getContext(['plots','warnings']);assert.ok(!result.warnings?.length);return result;}finally{session?.stop();}}
 const indicatorSource=await read('strategy/indicator.pine'),strategySource=await read('strategy/strategy.pine');assert.equal(createHash('sha256').update(indicatorSource).digest('hex'),'45b23badc27b09a588dc05693d7a7ae9249d4d2c04c95ebc16016671022e645a');
