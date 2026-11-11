@@ -1,6 +1,6 @@
 # User guide
 
-Open the GitHub Pages site and select **Run fresh scan**. Keep the tab open while its background worker processes the available markets. Search and filter the table, pin markets locally, select a market to inspect its candle chart, and open the methodology panel to see the attention arithmetic. Browser-local storage belongs to the current browser and origin; it does not synchronize between devices.
+Open [Cypher Heirs](https://hgosansn.github.io/CypherHeirs/), select **Open dashboard**, then **Run fresh scan**. You can also bookmark the [dashboard directly](https://hgosansn.github.io/CypherHeirs/dashboard.html). Keep the tab open while its background worker processes the available markets. Search and filter the table, pin markets locally, select a market to inspect its candle chart, and open the methodology panel to see the attention arithmetic. Browser-local storage belongs to the current browser and origin; it does not synchronize between devices.
 
 Open the separate **Assets** tab to review and edit the prefilled asset list. The list is a starting configuration, not a claim that an instrument is tradable on any particular platform. Asset names are fixed. The tab checks active Binance USDT perpetual contracts and filters unavailable assets automatically. Save your list locally before scanning it.
 

@@ -16,7 +16,7 @@ pnpm build
 pnpm preview
 ```
 
-The dev server uses `http://127.0.0.1:8792/`. Production output is `dist/`; serve it over HTTP. Vite uses a relative base so project-path hosting works on GitHub Pages. `scripts/runtime.mjs` copies the classic worker, scanner modules, frozen strategy and license notices into generated static output. Keep those files together.
+The dev server uses `http://127.0.0.1:8792/`. Production output is `dist/`; serve it over HTTP. The public landing page is `index.html`; the app is `dashboard.html`. Vite builds separate entries, so opening the landing page does not initialize the scanner or request market data. Legacy root links with a `symbols` query redirect to the dashboard with their query preserved. Both pages keep the same browser origin and saved workspace. Vite uses a relative base so project-path hosting works on GitHub Pages. `scripts/runtime.mjs` copies the classic worker, scanner modules, frozen strategy and license notices into generated static output. Keep those files together.
 
 ## Validation
 

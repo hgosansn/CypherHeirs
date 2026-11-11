@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added a public landing page with the promotional capture, product benefits, interactive feature tabs, FAQs and clear dashboard links.
+- Moved the app to `dashboard.html`, preserving browser storage and legacy symbol-selection links.
+
 ## v2.1.0 — 2026-11-11
 
 First packaged public release of Cypher Heirs.
